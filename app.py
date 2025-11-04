@@ -313,7 +313,7 @@ with col_left:
         yaxis=dict(gridcolor='rgba(255,255,255,0.1)', showgrid=False),
         margin=dict(l=10, r=10, t=10, b=10)
     )
-    st.plotly_chart(fig_top, use_container_width=True)
+    st.plotly_chart(fig_top, width='stretch')
 
 with col_right:
     st.subheader("📅 Faturamento por Mês")
@@ -348,7 +348,7 @@ with col_right:
         yaxis=dict(gridcolor='rgba(255,255,255,0.1)', showgrid=True),
         margin=dict(l=10, r=10, t=10, b=10)
     )
-    st.plotly_chart(fig_mes, use_container_width=True)
+    st.plotly_chart(fig_mes, width='stretch')
 
 st.markdown("---")
 
@@ -482,7 +482,7 @@ fig_cores.update_layout(
     ),
     margin=dict(l=10, r=10, t=40, b=10)
 )
-st.plotly_chart(fig_cores, use_container_width=True)
+st.plotly_chart(fig_cores, width='stretch')
 
 # Tabela detalhada
 st.markdown("---")
@@ -496,7 +496,7 @@ with tab1:
                      'valor_venda', 'vendedor_nome', 'cliente_nome', 'regiao_nome']]
         .sort_values('data_venda', ascending=False)
         .head(100),
-        use_container_width=True
+        width='stretch'
     )
 
 with tab2:
@@ -506,7 +506,7 @@ with tab2:
     }).sort_values('valor_venda', ascending=False)
     vendedores_stats.columns = ['Faturamento Total', 'Vendas']
     vendedores_stats['Ticket Médio'] = vendedores_stats['Faturamento Total'] / vendedores_stats['Vendas']
-    st.dataframe(vendedores_stats, use_container_width=True)
+    st.dataframe(vendedores_stats, width='stretch')
 
 with tab3:
     regioes_stats = df_filtered.groupby(['regiao_nome', 'regiao_estado']).agg({
@@ -514,7 +514,7 @@ with tab3:
         'venda_id': 'count'
     }).sort_values('valor_venda', ascending=False)
     regioes_stats.columns = ['Faturamento Total', 'Vendas']
-    st.dataframe(regioes_stats, use_container_width=True)
+    st.dataframe(regioes_stats, width='stretch')
 
 # Footer
 st.markdown("---")
