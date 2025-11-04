@@ -1,0 +1,232 @@
+// ============================================================
+// DIAGRAMA DE BANCO DE DADOS - SISTEMA DE VENDAS DE VEÍCULOS
+// ============================================================
+// Projeto: Dashboard de Análise de Vendas de Veículos
+// Disciplina: Business Intelligence
+// Data: Novembro 2025
+// 
+// REQUISITOS ATENDIDOS:
+// ✅ Chaves primárias e estrangeiras definidas
+// ✅ Cardinalidades representadas nos relacionamentos
+// ✅ Todas as entidades obrigatórias incluídas:
+//    - Veículo (modelo, marca, categoria, preço unitário)
+//    - Venda (data, valor, veículo, vendedor, cliente, região)
+//    - Vendedor (nome, ID, região)
+//    - Cliente (nome, ID, tipo PF/PJ)
+//    - Região (nome, estado)
+//    - Ano (extraído de Vendas.Data usando strftime)
+// ============================================================
+
+Project VendasVeiculos {
+  database_type: 'SQLite'
+  Note: '''
+Sistema de Vendas de Veículos - Modelo Estrela (Star Schema)
+
+Este banco de dados armazena informações sobre vendas de veículos,
+permitindo análises de desempenho por região, vendedor, marca e período.
+
+Principais análises suportadas:
+- Faturamento por período (mensal/anual)
+- Top vendedores e regiões
+- Modelos e marcas mais vendidos
+- Análise de categorias de veículos
+- Segmentação de clientes (PF/PJ)
+
+MODELO: Star Schema com Vendas como tabela fato central
+  '''
+}
+
+// ============================================================
+// ENUMS - VALORES CONTROLADOS
+// ============================================================
+
+Enum TipoCliente {
+  "Pessoa Física"
+  "Pessoa Jurídica"
+}
+
+Enum CategoriaVeiculo {
+  SUV
+  Sedan
+  Hatch
+  Pickup
+  Minivan
+}
+
+// ============================================================
+// TABELAS DIMENSÃO
+// ============================================================
+
+// Tabela: Regiões
+// Gerenciamento geográfico das vendas
+Table Regioes {
+  ID integer [pk, increment, note: 'CHAVE PRIMÁRIA - Identificador único da região']
+  Nome text [not null, note: 'Nome da região: Sul, Sudeste, Centro-Oeste, Nordeste, Norte']
+  Estado text [not null, note: 'Sigla do estado: RS, SP, RJ, MG, GO, BA, PE, AM, PA, etc']
+  
+  Note: 'DIMENSÃO GEOGRÁFICA - Agrupa vendas por localização (nome e estado)'
+  
+  indexes {
+    Estado [name: 'idx_regioes_estado']
+    Nome [name: 'idx_regioes_nome']
+  }
+}
+
+// Tabela: Vendedores
+// Força de vendas da empresa
+Table Vendedores {
+  ID integer [pk, increment, note: 'CHAVE PRIMÁRIA - Identificador único do vendedor']
+  Nome text [not null, note: 'Nome completo do vendedor']
+  RegiaoID integer [not null, note: 'CHAVE ESTRANGEIRA - Região de atuação do vendedor']
+  
+  Note: 'DIMENSÃO VENDEDORES - Análise de desempenho individual e por região de atuação'
+  
+  indexes {
+    RegiaoID [name: 'idx_vendedores_regiao']
+    Nome [name: 'idx_vendedores_nome']
+  }
+}
+
+// Tabela: Clientes
+// Base de clientes (Pessoa Física e Jurídica)
+Table Clientes {
+  ID integer [pk, increment, note: 'CHAVE PRIMÁRIA - Identificador único do cliente']
+  Nome text [not null, note: 'Nome do cliente (PF) ou razão social (PJ)']
+  Tipo text [not null, note: 'Tipo de cliente: Pessoa Física ou Pessoa Jurídica']
+  
+  Note: 'DIMENSÃO CLIENTES - Segmentação entre Pessoa Física e Pessoa Jurídica'
+  
+  indexes {
+    Tipo [name: 'idx_clientes_tipo']
+    Nome [name: 'idx_clientes_nome']
+  }
+}
+
+// Tabela: Veículos
+// Catálogo de produtos disponíveis
+Table Veiculos {
+  ID integer [pk, increment, note: 'CHAVE PRIMÁRIA - Identificador único do veículo']
+  Modelo text [not null, note: 'Nome do modelo (ex: Toyota Corolla, VW Gol)']
+  Marca text [not null, note: 'Fabricante do veículo (Toyota, VW, Fiat, Chevrolet, Honda, etc)']
+  Categoria text [not null, note: 'Categoria do veículo: SUV, Sedan, Hatch, Pickup ou Minivan']
+  Cor text [not null, note: 'Cor do veículo (Preto, Branco, Prata, Vermelho, Azul, Cinza)']
+  PrecoUnitario real [not null, note: 'Preço de referência/tabela do veículo']
+  
+  Note: 'DIMENSÃO VEÍCULOS - Catálogo de produtos com modelo, marca, categoria, cor e preço'
+  
+  indexes {
+    Marca [name: 'idx_veiculos_marca']
+    Categoria [name: 'idx_veiculos_categoria']
+    Modelo [name: 'idx_veiculos_modelo']
+  }
+}
+
+// ============================================================
+// TABELA FATO
+// ============================================================
+
+// Tabela: Vendas
+// Registro de todas as transações de venda
+Table Vendas {
+  ID integer [pk, increment, note: 'CHAVE PRIMÁRIA - Identificador único da venda']
+  Data date [not null, note: 'Data completa da venda (para extrair ano, mês, dia)']
+  Valor real [not null, note: 'Valor total da transação de venda']
+  VeiculoID integer [not null, note: 'CHAVE ESTRANGEIRA - Veículo vendido']
+  VendedorID integer [not null, note: 'CHAVE ESTRANGEIRA - Vendedor responsável pela venda']
+  ClienteID integer [not null, note: 'CHAVE ESTRANGEIRA - Cliente comprador']
+  RegiaoID integer [not null, note: 'CHAVE ESTRANGEIRA - Região onde ocorreu a venda']
+  
+  Note: '''
+TABELA FATO PRINCIPAL - Centro do Modelo Estrela (Star Schema)
+
+Registra todas as transações de venda do sistema.
+Conecta-se a todas as dimensões através de chaves estrangeiras.
+
+Métricas calculadas:
+- Faturamento total/mensal/anual
+- Quantidade de vendas (COUNT)
+- Ticket médio (AVG)
+- Performance por dimensão (vendedor, região, produto, tempo)
+
+O campo Data permite extrair Ano, Mês e Dia para análises temporais.
+  '''
+  
+  indexes {
+    Data [name: 'idx_vendas_data']
+    VeiculoID [name: 'idx_vendas_veiculo']
+    VendedorID [name: 'idx_vendas_vendedor']
+    ClienteID [name: 'idx_vendas_cliente']
+    RegiaoID [name: 'idx_vendas_regiao']
+    (Data, VendedorID) [name: 'idx_vendas_data_vendedor']
+    (Data, RegiaoID) [name: 'idx_vendas_data_regiao']
+  }
+}
+
+// ============================================================
+// RELACIONAMENTOS COM CARDINALIDADES EXPLÍCITAS
+// ============================================================
+
+// RELACIONAMENTO: Região → Vendedor
+// CARDINALIDADE: 1:N (Uma região pode ter MUITOS vendedores)
+// Uma região (1) possui vários vendedores (N) atuando nela
+Ref: Regioes.ID < Vendedores.RegiaoID
+
+// RELACIONAMENTO: Veículo → Venda
+// CARDINALIDADE: 1:N (Um veículo pode estar em MUITAS vendas)
+// Um modelo de veículo (1) pode ser vendido várias vezes (N)
+Ref: Veiculos.ID < Vendas.VeiculoID
+
+// RELACIONAMENTO: Vendedor → Venda
+// CARDINALIDADE: 1:N (Um vendedor realiza MUITAS vendas)
+// Um vendedor (1) realiza várias vendas (N) ao longo do tempo
+Ref: Vendedores.ID < Vendas.VendedorID
+
+// RELACIONAMENTO: Cliente → Venda
+// CARDINALIDADE: 1:N (Um cliente pode fazer MUITAS compras)
+// Um cliente (1) pode comprar vários veículos (N) ao longo do tempo
+Ref: Clientes.ID < Vendas.ClienteID
+
+// RELACIONAMENTO: Região → Venda
+// CARDINALIDADE: 1:N (Uma região registra MUITAS vendas)
+// Uma região (1) tem várias vendas (N) registradas nela
+Ref: Regioes.ID < Vendas.RegiaoID
+
+// ============================================================
+// AGRUPAMENTO DE TABELAS (Modelo Estrela)
+// ============================================================
+
+TableGroup dimensoes {
+  Regioes
+  Vendedores
+  Clientes
+  Veiculos
+}
+
+TableGroup fato {
+  Vendas
+}
+
+// ============================================================
+// RESUMO DAS CARDINALIDADES
+// ============================================================
+// Símbolo < significa: Um-para-Muitos (1:N)
+//
+// Regioes (1) ──< (N) Vendedores    [Uma região tem muitos vendedores]
+// Veiculos (1) ──< (N) Vendas       [Um veículo pode ser vendido várias vezes]
+// Vendedores (1) ──< (N) Vendas     [Um vendedor faz várias vendas]
+// Clientes (1) ──< (N) Vendas       [Um cliente pode fazer várias compras]
+// Regioes (1) ──< (N) Vendas        [Uma região tem várias vendas]
+//
+// ============================================================
+// DIMENSÃO TEMPORAL (Ano)
+// ============================================================
+// O Ano NÃO é uma tabela separada, é extraído do campo Vendas.Data
+// 
+// Exemplo de extração em SQL:
+// SELECT strftime('%Y', Data) as Ano FROM Vendas
+//
+// Isso permite:
+// - Filtro por ano no dashboard
+// - Análises anuais sem redundância de dados
+// - Simplicidade no modelo (menos joins desnecessários)
+// ============================================================
