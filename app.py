@@ -243,19 +243,20 @@ with col1:
     veiculos_vendidos = len(df_filtered)
     delta_vendas = veiculos_vendidos - META_VENDAS
     st.metric(
-        label="� Veículos Vendidos",
+        label="🚗 Veículos Vendidos",
         value=f"{veiculos_vendidos:,}",
         delta=f"{delta_vendas:+,} vs meta ({META_VENDAS:,})",
-        delta_color="normal"  # verde para positivo, vermelho para negativo
+        delta_color="normal"
     )
 
 with col2:
     percentual_meta = (veiculos_vendidos / META_VENDAS * 100) if META_VENDAS > 0 else 0
+    delta_perc_vendas = percentual_meta - 100
     st.metric(
         label="📊 % da Meta de Vendas",
         value=f"{percentual_meta:.1f}%",
-        delta=f"{percentual_meta - 100:+.1f}%",
-        delta_color="normal"  # verde para positivo, vermelho para negativo
+        delta=f"{delta_perc_vendas:+.1f}%",
+        delta_color="normal"
     )
 
 with col3:
@@ -264,17 +265,18 @@ with col3:
     st.metric(
         label="💰 Faturamento Total",
         value=f"R$ {faturamento_total/1e6:.1f}M",
-        delta=f"R$ {delta_faturamento/1e6:+.1f}M vs meta",
-        delta_color="normal"  # verde para positivo, vermelho para negativo
+        delta=f"{delta_faturamento/1e6:.1f}M vs meta (R$ {META_FATURAMENTO/1e6:.0f}M)",
+        delta_color="normal"
     )
 
 with col4:
     percentual_fat = (faturamento_total / META_FATURAMENTO * 100) if META_FATURAMENTO > 0 else 0
+    delta_perc_fat = percentual_fat - 100
     st.metric(
         label="📈 % da Meta de Faturamento",
         value=f"{percentual_fat:.1f}%",
-        delta=f"{percentual_fat - 100:+.1f}%",
-        delta_color="normal"  # verde para positivo, vermelho para negativo
+        delta=f"{delta_perc_fat:+.1f}%",
+        delta_color="normal"
     )
 
 st.markdown("---")
