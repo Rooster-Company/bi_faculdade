@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+dist/
+build/
+.venv/
+venv/
+env/
+ENV/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Git
+.git/
+.gitignore
+
+# Testes e Audit
+audit/
+test_*.py
+*_test.py
+
+# Documentação e arquivos desnecessários
+README.md
+instruções.md
+diagrama/
+*.md
+
+# Access Database (não necessário no container)
+*.accdb
+
+# Outros
+.DS_Store
+Thumbs.db
